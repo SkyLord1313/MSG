@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messaging App</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <script src="/socket.io/socket.io.js"></script> <!-- Include Socket.io client library -->
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background-color: #e6e6fa; /* Light purple background */
+            color: #4b0082; /* Dark purple text */
+            text-align: center;
+        }
+        #messagesList {
+            list-style-type: none;
+            padding: 0;
+        }
+        #messageForm {
+            margin-top: 20px;
+        }
+        #messageInput {
+            width: 300px;
+            padding: 10px;
+        }
+        #sendMessageBtn {
+            padding: 10px 20px;
+            background-color: #9370db; /* Medium purple button */
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        #displayNameForm {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Messaging App!</h1>
+    
+    <div id="displayNameForm">
+        <input type="text" id="displayNameInput" placeholder="Choose your display name" required>
+        <button id="saveDisplayNameBtn">Save Display Name</button>
+    </div>
+
+    <ul id="messagesList"></ul>
+    <form id="messageForm">
+        <input type="text" id="messageInput" placeholder="Type your message" required>
+        <button type="submit" id="sendMessageBtn">Send</button>
+    </form>
+
+    <script>
+        const socket = io(); // Initialize socket.io
+        const messagesList = document.getElementById('messagesList');
+        const displayNameInput = document.getElementById('displayNameInput');
+        const saveDisplayNameBtn = document.getElementById('saveDisplayNameBtn');
+
+        // Load display name from localStorage
+        window.onload = function() {
+            const savedDisplayName = localStorage.getItem('displayName');
+            if (savedDisplayName) {
+                displayNameInput.value = savedDisplayName; // Pre-fill the input
+            }
+        };
+
+        // Handle saving the display name
+        saveDisplayNameBtn.onclick = function() {
+            const displayName = displayNameInput.value;
+            if (displayName) {
+                localStorage.setItem('displayName', displayName); // Save to localStorage
+                alert('Display name saved!');
+            }
+        };
+
+        // Handle sending messages
+        document.getElementById('messageForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const displayName = localStorage.getItem('displayName') || 'Anonymous'; // Default to "Anonymous"
+            const message = document.getElementById('messageInput').value;
+
+            // Emit message to the server
+            socket.emit('sendMessage', { username: displayName, message });
+            document.getElementById('messageInput').value = ''; // Clear input
+        });
+
+        // Listen for incoming messages
+        socket.on('receiveMessage', function(data) {
+            addMessageToList(data.message, data.username);
+        });
+
+        // Function to add message to list
+        function addMessageToList(message, user) {
+            const li = document.createElement('li');
+            li.textContent = `${user}: ${message}`; // Show username next to message
+            messagesList.appendChild(li);
+        }
+    </script>
+</body>
+</html>
